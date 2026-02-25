@@ -56,8 +56,8 @@ Core implementation is TypeScript in `scripts/clawra-selfie.ts` (`scripts/clawra
 Supported platforms and full model names:
 
 - `qwen`
-  - `generate`: `qwen-image-plus-2026-01-09` (default)
-  - `edit`: `qwen-image-edit-plus` (default)
+  - `generate`: `qwen-image-plus` (default), `qwen-image-max`
+  - `edit`: `qwen-image-edit-plus` (default), `qwen-image-edit-max`
 - `volc`
   - `generate`: `doubao-seedream-5-0-260128` (default), `doubao-seedream-4-5-251128`, `doubao-seedream-4-0-250828`
   - `edit`: `doubao-seedream-5-0-260128` (default), `doubao-seedream-4-5-251128`, `doubao-seedream-4-0-250828`

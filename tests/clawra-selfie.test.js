@@ -163,7 +163,7 @@ test("Qwen generate sends correct request payload", async () => {
   );
   assert.equal(calls[0].options.headers.Authorization, "Bearer dash-key");
   const body = JSON.parse(calls[0].options.body);
-  assert.equal(body.model, "qwen-image-plus-2026-01-09");
+  assert.equal(body.model, "qwen-image-plus");
   assert.equal(body.input.messages[0].content[0].text, "a stylish mirror selfie");
   assert.equal(result.media, "https://img.example/qwen-generate.png");
   assert.equal(result.source, "url");
@@ -194,16 +194,48 @@ test("Qwen edit sends correct image+text payload", async () => {
   const result = await generateImageWithQwenEdit({
     prompt: "换成电影海报风格",
     aspectRatio: "3:4",
-    model: "qwen-image-edit-plus",
+    model: "qwen-image-edit-max",
   });
 
   assert.equal(calls.length, 1);
   const body = JSON.parse(calls[0].options.body);
-  assert.equal(body.model, "qwen-image-edit-plus");
+  assert.equal(body.model, "qwen-image-edit-max");
   assert.equal(body.parameters.size, "960*1280");
   assert.equal(body.input.messages[0].content[0].image, "https://img.example/input.png");
   assert.equal(body.input.messages[0].content[1].text, "换成电影海报风格");
   assert.equal(result.media, "https://img.example/qwen-edit.png");
+  assert.equal(result.source, "url");
+});
+
+test("Qwen generate supports explicit max model override", async () => {
+  process.env.DASHSCOPE_API_KEY = "dash-key";
+  const calls = [];
+  installFetchQueue(
+    [
+      makeResponse({
+        output: {
+          choices: [
+            {
+              message: {
+                content: [{ image: "https://img.example/qwen-generate-max.png" }],
+              },
+            },
+          ],
+        },
+      }),
+    ],
+    calls
+  );
+
+  const result = await generateImageWithQwen({
+    prompt: "a futuristic portrait",
+    model: "qwen-image-max",
+  });
+
+  assert.equal(calls.length, 1);
+  const body = JSON.parse(calls[0].options.body);
+  assert.equal(body.model, "qwen-image-max");
+  assert.equal(result.media, "https://img.example/qwen-generate-max.png");
   assert.equal(result.source, "url");
 });
 

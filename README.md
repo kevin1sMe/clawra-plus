@@ -22,7 +22,7 @@
 
 | Platform | Operation | 默认模型（可调用全名） | 关键配置 |
 |---|---|---|---|
-| `qwen` | `generate` / `edit` | `qwen-image-plus-2026-01-09` / `qwen-image-edit-plus` | `DASHSCOPE_API_KEY` |
+| `qwen` | `generate` / `edit` | `qwen-image-plus` / `qwen-image-edit-plus`（支持 `qwen-image-max` / `qwen-image-edit-max`） | `DASHSCOPE_API_KEY` |
 | `volc` | `generate` / `edit` | `doubao-seedream-5-0-260128` / `doubao-seedream-5-0-260128` | `ARK_API_KEY` |
 | `fal` | `generate` / `edit` | `xai/grok-imagine-image` / `xai/grok-imagine-image/edit` | `FAL_KEY` |
 | `google` | `generate` | `gemini-3-pro-image-preview` | `GOOGLE_API_KEY` |
@@ -111,7 +111,7 @@ npx ts-node scripts/clawra-selfie.ts --list-models
 ```bash
 # Qwen
 DASHSCOPE_API_KEY=your_key
-QWEN_IMAGE_EDIT_IMAGE_URL=https://example.com/input.png  # 可选，qwen-image-edit-plus 参考图
+QWEN_IMAGE_EDIT_IMAGE_URL=https://example.com/input.png  # 可选，qwen-image-edit-* 参考图
 QWEN_IMAGE_EDIT_IMAGE_PATH=/path/to/input.png            # 可选，优先于 URL
 
 # Volcengine
@@ -136,7 +136,7 @@ OPENCLAW_GATEWAY_TOKEN=your_token
 CLAWRA_DOWNLOAD_URL_MEDIA=1  # 可选，发送前将 URL 媒体下载到本地临时文件（默认开启，设为 0 关闭）
 
 # 可选：设置平台默认模型
-DEFAULT_MODEL_QWEN_GENERATE=qwen-image-plus-2026-01-09
+DEFAULT_MODEL_QWEN_GENERATE=qwen-image-plus
 DEFAULT_MODEL_QWEN_EDIT=qwen-image-edit-plus
 DEFAULT_MODEL_VOLC_GENERATE=doubao-seedream-5-0-260128
 DEFAULT_MODEL_VOLC_EDIT=doubao-seedream-5-0-260128

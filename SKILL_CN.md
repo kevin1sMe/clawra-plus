@@ -50,8 +50,8 @@ OPENCLAW_GATEWAY_TOKEN=your_token      # 来自：openclaw doctor --generate-gat
 支持的平台与模型（使用完整 API 名称）：
 
 - `qwen`
-  - `generate`: `qwen-image-plus-2026-01-09`（默认）
-  - `edit`: `qwen-image-edit-plus`（默认）
+  - `generate`: `qwen-image-plus`（默认）、`qwen-image-max`
+  - `edit`: `qwen-image-edit-plus`（默认）、`qwen-image-edit-max`
 - `volc`
   - `generate`: `doubao-seedream-5-0-260128`（默认）、`doubao-seedream-4-5-251128`、`doubao-seedream-4-0-250828`
   - `edit`: `doubao-seedream-5-0-260128`（默认）、`doubao-seedream-4-5-251128`、`doubao-seedream-4-0-250828`

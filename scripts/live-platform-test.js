@@ -38,7 +38,7 @@ const DEFAULT_MODELS = {
     edit: "doubao-seedream-5-0-260128",
   },
   qwen: {
-    generate: "qwen-image-plus-2026-01-09",
+    generate: "qwen-image-plus",
     edit: "qwen-image-edit-plus",
   },
   google: {

@@ -22,7 +22,7 @@ The script now uses a unified structure: `platform -> operation(generate/edit) -
 
 | Platform | Operation | Default model (full API name) | Required Config |
 |---|---|---|---|
-| `qwen` | `generate` / `edit` | `qwen-image-plus-2026-01-09` / `qwen-image-edit-plus` | `DASHSCOPE_API_KEY` |
+| `qwen` | `generate` / `edit` | `qwen-image-plus` / `qwen-image-edit-plus` (also supports `qwen-image-max` / `qwen-image-edit-max`) | `DASHSCOPE_API_KEY` |
 | `volc` | `generate` / `edit` | `doubao-seedream-5-0-260128` / `doubao-seedream-5-0-260128` | `ARK_API_KEY` |
 | `fal` | `generate` / `edit` | `xai/grok-imagine-image` / `xai/grok-imagine-image/edit` | `FAL_KEY` |
 | `google` | `generate` | `gemini-3-pro-image-preview` | `GOOGLE_API_KEY` |
@@ -111,7 +111,7 @@ For Hunyuan platform, timeout is 120 seconds with 1-second polling intervals.
 ```bash
 # Qwen
 DASHSCOPE_API_KEY=your_key
-QWEN_IMAGE_EDIT_IMAGE_URL=https://example.com/input.png  # optional, qwen-image-edit-plus reference image
+QWEN_IMAGE_EDIT_IMAGE_URL=https://example.com/input.png  # optional, qwen-image-edit-* reference image
 QWEN_IMAGE_EDIT_IMAGE_PATH=/path/to/input.png            # optional, takes precedence over URL
 
 # Volcengine
@@ -136,7 +136,7 @@ OPENCLAW_GATEWAY_TOKEN=your_token
 CLAWRA_DOWNLOAD_URL_MEDIA=1  # optional, download URL media to local temp file before send (enabled by default, set 0 to disable)
 
 # Optional: set default model per platform/operation
-DEFAULT_MODEL_QWEN_GENERATE=qwen-image-plus-2026-01-09
+DEFAULT_MODEL_QWEN_GENERATE=qwen-image-plus
 DEFAULT_MODEL_QWEN_EDIT=qwen-image-edit-plus
 DEFAULT_MODEL_VOLC_GENERATE=doubao-seedream-5-0-260128
 DEFAULT_MODEL_VOLC_EDIT=doubao-seedream-5-0-260128

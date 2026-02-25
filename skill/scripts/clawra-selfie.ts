@@ -156,7 +156,7 @@ function resolveDashScopeBaseUrl(): string {
 }
 
 function resolveQwenModel(override?: string): string {
-  return override || "qwen-image-plus-2026-01-09";
+  return override || "qwen-image-plus";
 }
 
 function resolveQwenEditModel(override?: string): string {
@@ -299,7 +299,7 @@ const PLATFORM_SPECS: Record<Platform, PlatformSpec> = {
     platform: "qwen",
     operations: {
       generate: {
-        models: ["qwen-image-plus-2026-01-09"],
+        models: ["qwen-image-plus", "qwen-image-max"],
         caption: "Generated with Qwen Image",
         execute: async ({ prompt, model }) =>
           generateImageWithQwen({
@@ -308,7 +308,7 @@ const PLATFORM_SPECS: Record<Platform, PlatformSpec> = {
           }),
       },
       edit: {
-        models: ["qwen-image-edit-plus"],
+        models: ["qwen-image-edit-plus", "qwen-image-edit-max"],
         caption: "Edited with Qwen Image",
         execute: async ({ prompt, aspectRatio, model }) =>
           generateImageWithQwenEdit({
@@ -1374,8 +1374,8 @@ Environment:
   DASHSCOPE_API_KEY        - Qwen backend key (or ALIBABA_CLOUD_MODEL_STUDIO_API_KEY)
   DASHSCOPE_REGION         - beijing | singapore (default: beijing)
   DASHSCOPE_BASE_URL       - Optional base URL override
-  QWEN_IMAGE_EDIT_IMAGE_URL - Optional reference image URL for qwen-image-edit-plus
-  QWEN_IMAGE_EDIT_IMAGE_PATH - Optional local reference image path for qwen-image-edit-plus
+  QWEN_IMAGE_EDIT_IMAGE_URL - Optional reference image URL for qwen-image-edit-* models
+  QWEN_IMAGE_EDIT_IMAGE_PATH - Optional local reference image path for qwen-image-edit-* models
   FAL_KEY                  - fal backend key
   FAL_EDIT_IMAGE_URL       - Optional reference image URL for fal edit
   FAL_EDIT_IMAGE_PATH      - Optional local reference image path for fal edit
