@@ -25,7 +25,7 @@
 | `qwen` | `generate` / `edit` | `qwen-image-plus` / `qwen-image-edit-plus`（支持 `qwen-image-max` / `qwen-image-edit-max`） | `DASHSCOPE_API_KEY` |
 | `volc` | `generate` / `edit` | `doubao-seedream-5-0-260128` / `doubao-seedream-5-0-260128` | `ARK_API_KEY` |
 | `fal` | `generate` / `edit` | `xai/grok-imagine-image` / `xai/grok-imagine-image/edit` | `FAL_KEY` |
-| `google` | `generate` | `gemini-3-pro-image-preview` | `GOOGLE_API_KEY` |
+| `google` | `generate` / `edit` | `gemini-3-pro-image-preview` / `gemini-3-pro-image-preview`（支持 `gemini-2.5-flash-image`） | `GOOGLE_API_KEY` |
 | `hunyuan` | `generate` / `edit` | `aiart/v20221229 SubmitTextToImageJob` / `aiart/v20221229 SubmitTextToImageJob` | `TENCENT_SECRET_ID` + `TENCENT_SECRET_KEY` |
 
 查看完整模型列表：
@@ -124,6 +124,8 @@ FAL_EDIT_IMAGE_PATH=/path/to/input.png            # 可选，优先于 URL
 
 # Google
 GOOGLE_API_KEY=your_key
+GOOGLE_EDIT_IMAGE_URL=https://example.com/input.png  # 可选，google 编辑参考图 URL
+GOOGLE_EDIT_IMAGE_PATH=/path/to/input.png            # 可选，优先于 URL
 
 # Tencent Hunyuan
 TENCENT_SECRET_ID=your_secret_id
@@ -143,6 +145,7 @@ DEFAULT_MODEL_VOLC_EDIT=doubao-seedream-5-0-260128
 DEFAULT_MODEL_FAL_GENERATE=xai/grok-imagine-image
 DEFAULT_MODEL_FAL_EDIT=xai/grok-imagine-image/edit
 DEFAULT_MODEL_GOOGLE_GENERATE=gemini-3-pro-image-preview
+DEFAULT_MODEL_GOOGLE_EDIT=gemini-3-pro-image-preview
 DEFAULT_MODEL_HUNYUAN_GENERATE="aiart/v20221229 SubmitTextToImageJob"
 DEFAULT_MODEL_HUNYUAN_EDIT="aiart/v20221229 SubmitTextToImageJob"
 ```

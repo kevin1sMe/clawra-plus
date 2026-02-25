@@ -170,7 +170,7 @@ ${c("magenta", "│")}  ${c("bright", "Clawra Selfie")} - OpenClaw Skill Install
 ${c("magenta", "└─────────────────────────────────────────┘")}
 
 Add selfie generation superpowers to your OpenClaw agent!
-Uses ${c("cyan", "xAI Grok Imagine")} via ${c("cyan", "fal.ai")} for image editing.
+Supports multi-backend image editing (${c("cyan", "Qwen / Google / Volc / fal / Hunyuan")}).
 `);
 }
 

@@ -11,6 +11,7 @@ const {
   generateImageWithFal,
   generateImageWithFalEdit,
   generateImageWithGoogle,
+  generateImageWithGoogleEdit,
   generateImageWithHunyuan,
   generateImageWithQwen,
   generateImageWithQwenEdit,
@@ -92,6 +93,7 @@ test("supported platform/operation combinations are wired", async () => {
     { platform: "fal", operation: "generate", error: /FAL_KEY environment variable not set/ },
     { platform: "fal", operation: "edit", error: /FAL_KEY environment variable not set/ },
     { platform: "google", operation: "generate", error: /Google API key missing/ },
+    { platform: "google", operation: "edit", error: /Google API key missing/ },
     { platform: "hunyuan", operation: "generate", error: /Tencent credentials missing/ },
     { platform: "hunyuan", operation: "edit", error: /Tencent credentials missing/ },
   ];
@@ -116,10 +118,10 @@ test("unsupported platform/operation combinations fail fast", async () => {
       prompt: "test prompt",
       channel: "#general",
       platform: "google",
-      operation: "edit",
+      operation: "both",
       useOpenClawCLI: false,
     }),
-    /does not support operation 'edit'/
+    /does not support operation 'both'/
   );
 
   await assert.rejects(
@@ -413,6 +415,61 @@ test("Google generate calls API and writes inline image to file", async () => {
 
   const bytes = await fs.readFile(result.media);
   assert.deepEqual(bytes, Buffer.from("google-image-bytes"));
+  await fs.unlink(result.media);
+});
+
+test("Google edit sends image+text payload and writes inline image to file", async () => {
+  process.env.GOOGLE_API_KEY = "google-key";
+  process.env.GOOGLE_EDIT_IMAGE_URL = "https://img.example/google-edit-input.jpg";
+  const calls = [];
+  const sourceBytes = Buffer.from("google-edit-input-bytes");
+  const editedBase64 = Buffer.from("google-edit-output-bytes").toString("base64");
+
+  installFetchQueue(
+    [
+      makeResponse("source-image", 200, {
+        headers: { "content-type": "image/jpeg" },
+        binary: sourceBytes,
+      }),
+      makeResponse({
+        candidates: [
+          {
+            content: {
+              parts: [
+                { text: "edited prompt" },
+                { inlineData: { mimeType: "image/png", data: editedBase64 } },
+              ],
+            },
+          },
+        ],
+      }),
+    ],
+    calls
+  );
+
+  const result = await generateImageWithGoogleEdit({
+    prompt: "turn this into anime style",
+    aspectRatio: "1:1",
+    model: "gemini-3-pro-image-preview",
+  });
+
+  assert.equal(calls.length, 2);
+  assert.equal(calls[0].url, "https://img.example/google-edit-input.jpg");
+  assert.equal(
+    calls[1].url,
+    "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image-preview:generateContent?key=google-key"
+  );
+
+  const body = JSON.parse(calls[1].options.body);
+  assert.equal(body.contents[0].parts[0].text, "turn this into anime style");
+  assert.equal(body.contents[0].parts[1].inlineData.mimeType, "image/jpeg");
+  assert.equal(body.contents[0].parts[1].inlineData.data, sourceBytes.toString("base64"));
+  assert.equal(body.generationConfig.imageConfig.aspectRatio, "1:1");
+  assert.equal(result.source, "file");
+  assert.equal(result.model, "gemini-3-pro-image-preview");
+
+  const bytes = await fs.readFile(result.media);
+  assert.deepEqual(bytes, Buffer.from("google-edit-output-bytes"));
   await fs.unlink(result.media);
 });
 

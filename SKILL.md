@@ -66,6 +66,7 @@ Supported platforms and full model names:
   - `edit`: `xai/grok-imagine-image/edit` (default)
 - `google`
   - `generate`: `gemini-3-pro-image-preview` (default), `gemini-2.5-flash-image`
+  - `edit`: `gemini-3-pro-image-preview` (default), `gemini-2.5-flash-image`
 - `hunyuan`
   - `edit`: `aiart/v20221229 SubmitTextToImageJob` (default)
 
@@ -227,6 +228,10 @@ GOOGLE_API_KEY=*** \
 # google generate (flash) — GOOGLE_API_KEY
 GOOGLE_API_KEY=*** \
   npx ts-node scripts/clawra-selfie.ts "a cat astronaut selfie" "#photos" "Flash" "1:1" "png" "google" "generate" "gemini-2.5-flash-image"
+
+# google edit — GOOGLE_API_KEY + GOOGLE_EDIT_IMAGE_URL
+GOOGLE_API_KEY=*** GOOGLE_EDIT_IMAGE_URL=https://example.com/input.png \
+  npx ts-node scripts/clawra-selfie.ts "turn this into a cinematic portrait" "#photos" "Google edit" "1:1" "png" "google" "edit" "gemini-3-pro-image-preview"
 ```
 
 ## Supported Platforms

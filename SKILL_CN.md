@@ -60,6 +60,7 @@ OPENCLAW_GATEWAY_TOKEN=your_token      # 来自：openclaw doctor --generate-gat
   - `edit`: `xai/grok-imagine-image/edit`（默认）
 - `google`
   - `generate`: `gemini-3-pro-image-preview`（默认）、`gemini-2.5-flash-image`
+  - `edit`: `gemini-3-pro-image-preview`（默认）、`gemini-2.5-flash-image`
 - `hunyuan`
   - `edit`: `aiart/v20221229 SubmitTextToImageJob`（默认）
 
@@ -212,6 +213,10 @@ FAL_KEY=*** npx ts-node scripts/clawra-selfie.ts "a cyberpunk city selfie" "#art
 
 # google 平台 generate
 GOOGLE_API_KEY=*** npx ts-node scripts/clawra-selfie.ts "a cozy cafe selfie" "#photos" "Pro" "1:1" "png" "google" "generate" "gemini-3-pro-image-preview"
+
+# google 平台 edit
+GOOGLE_API_KEY=*** GOOGLE_EDIT_IMAGE_URL=https://example.com/input.png \
+  npx ts-node scripts/clawra-selfie.ts "改成电影海报质感" "#photos" "Google edit" "1:1" "png" "google" "edit" "gemini-3-pro-image-preview"
 
 # hunyuan 平台 edit
 TENCENT_SECRET_ID=*** TENCENT_SECRET_KEY=*** \

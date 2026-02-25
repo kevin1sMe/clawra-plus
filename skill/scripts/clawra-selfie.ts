@@ -238,6 +238,29 @@ function extensionFromUrl(mediaUrl: string): string | undefined {
   }
 }
 
+function mimeTypeFromUrl(mediaUrl: string): string | undefined {
+  const ext = extensionFromUrl(mediaUrl);
+  if (!ext) return undefined;
+  switch (ext) {
+    case "jpg":
+    case "jpeg":
+      return "image/jpeg";
+    case "png":
+      return "image/png";
+    case "webp":
+      return "image/webp";
+    case "gif":
+      return "image/gif";
+    case "bmp":
+      return "image/bmp";
+    case "tif":
+    case "tiff":
+      return "image/tiff";
+    default:
+      return undefined;
+  }
+}
+
 function shouldDownloadUrlMediaForSend(): boolean {
   return process.env.CLAWRA_DOWNLOAD_URL_MEDIA !== "0";
 }
@@ -292,6 +315,31 @@ async function resolveFalEditImage(): Promise<string> {
 
 function resolveGoogleModel(model: string): string {
   return model;
+}
+
+async function resolveGoogleEditImagePart(): Promise<{ mimeType: string; data: string }> {
+  if (process.env.GOOGLE_EDIT_IMAGE_PATH) {
+    const imagePath = process.env.GOOGLE_EDIT_IMAGE_PATH;
+    const bytes = await fs.readFile(imagePath);
+    const mimeType = detectImageMimeType(imagePath);
+    return { mimeType, data: bytes.toString("base64") };
+  }
+
+  const imageUrl =
+    process.env.GOOGLE_EDIT_IMAGE_URL ||
+    "http://tb0178hpn.hn-bkt.clouddn.com/clawra.png";
+  const response = await fetch(imageUrl);
+  if (!response.ok) {
+    throw new Error(`Google edit source image download failed: HTTP ${response.status}`);
+  }
+
+  const contentType = response.headers?.get?.("content-type")?.split(";")[0]?.trim();
+  const mimeType = contentType || mimeTypeFromUrl(imageUrl) || "image/png";
+  const bytes = typeof response.arrayBuffer === "function"
+    ? Buffer.from(await response.arrayBuffer())
+    : Buffer.from(await response.text());
+
+  return { mimeType, data: bytes.toString("base64") };
 }
 
 const PLATFORM_SPECS: Record<Platform, PlatformSpec> = {
@@ -386,6 +434,16 @@ const PLATFORM_SPECS: Record<Platform, PlatformSpec> = {
         caption: "Generated with Google Image",
         execute: async ({ prompt, aspectRatio, model }) =>
           generateImageWithGoogle({
+            prompt,
+            aspectRatio,
+            model,
+          }),
+      },
+      edit: {
+        models: ["gemini-3-pro-image-preview", "gemini-2.5-flash-image"],
+        caption: "Edited with Google Image",
+        execute: async ({ prompt, aspectRatio, model }) =>
+          generateImageWithGoogleEdit({
             prompt,
             aspectRatio,
             model,
@@ -720,6 +778,110 @@ async function generateImageWithGoogle(options: {
 
   const mimeType: string = imagePart.inlineData.mimeType || "image/png";
   const imageBase64: string = imagePart.inlineData.data;
+
+  let ext = "png";
+  if (mimeType.includes("jpeg") || mimeType.includes("jpg")) ext = "jpg";
+  if (mimeType.includes("webp")) ext = "webp";
+
+  const outputPath = path.join(
+    os.tmpdir(),
+    `clawra-selfie-google-${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+  );
+
+  await fs.writeFile(outputPath, Buffer.from(imageBase64, "base64"));
+
+  const revisedPrompt = parts.find(
+    (part) => typeof part?.text === "string" && part.text.trim().length > 0
+  )?.text;
+
+  return {
+    media: outputPath,
+    source: "file",
+    model,
+    revisedPrompt,
+  };
+}
+
+/**
+ * Edit image using Google Gemini image models (nano-banana / pro)
+ */
+async function generateImageWithGoogleEdit(options: {
+  prompt: string;
+  aspectRatio: AspectRatio;
+  model: string;
+}): Promise<GeneratedImage> {
+  const googleApiKey = resolveGoogleApiKey();
+  if (!googleApiKey) {
+    throw new Error(
+      "Google API key missing. Set GOOGLE_API_KEY, GEMINI_API_KEY, or NANO_BANANA_PRO_API_KEY"
+    );
+  }
+
+  const model = resolveGoogleModel(options.model);
+  const imagePart = await resolveGoogleEditImagePart();
+
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${googleApiKey}`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              { text: options.prompt },
+              {
+                inlineData: {
+                  mimeType: imagePart.mimeType,
+                  data: imagePart.data,
+                },
+              },
+            ],
+          },
+        ],
+        generationConfig: {
+          responseModalities: ["TEXT", "IMAGE"],
+          imageConfig: {
+            aspectRatio: options.aspectRatio,
+          },
+        },
+      }),
+    }
+  );
+
+  const raw = await response.text();
+  let data: any;
+  try {
+    data = JSON.parse(raw);
+  } catch {
+    throw new Error(`Google edit returned non-JSON response: ${raw}`);
+  }
+
+  if (!response.ok) {
+    const errMsg = data?.error?.message || raw;
+    throw new Error(`Google image edit failed: ${errMsg}`);
+  }
+
+  if (data?.error) {
+    throw new Error(`Google image edit failed: ${data.error.message || data.error}`);
+  }
+
+  const parts: any[] = (data?.candidates || []).flatMap(
+    (candidate: any) => candidate?.content?.parts || []
+  );
+
+  const outputImagePart = parts.find(
+    (part) => typeof part?.inlineData?.data === "string"
+  );
+
+  if (!outputImagePart) {
+    throw new Error("Google edit response does not contain inline image data");
+  }
+
+  const mimeType: string = outputImagePart.inlineData.mimeType || "image/png";
+  const imageBase64: string = outputImagePart.inlineData.data;
 
   let ext = "png";
   if (mimeType.includes("jpeg") || mimeType.includes("jpg")) ext = "jpg";
@@ -1380,6 +1542,8 @@ Environment:
   FAL_EDIT_IMAGE_URL       - Optional reference image URL for fal edit
   FAL_EDIT_IMAGE_PATH      - Optional local reference image path for fal edit
   GOOGLE_API_KEY           - Google backend key (or GEMINI_API_KEY / NANO_BANANA_PRO_API_KEY)
+  GOOGLE_EDIT_IMAGE_URL    - Optional reference image URL for google edit
+  GOOGLE_EDIT_IMAGE_PATH   - Optional local reference image path for google edit
   TENCENT_SECRET_ID        - Tencent Cloud SecretId (hunyuan backend)
   TENCENT_SECRET_KEY       - Tencent Cloud SecretKey (hunyuan backend)
   TENCENT_REGION           - Tencent region (default: ap-guangzhou)
@@ -1397,6 +1561,7 @@ Environment:
   DEFAULT_MODEL_FAL_GENERATE    - Default model for fal/generate
   DEFAULT_MODEL_FAL_EDIT        - Default model for fal/edit
   DEFAULT_MODEL_GOOGLE_GENERATE - Default model for google/generate
+  DEFAULT_MODEL_GOOGLE_EDIT    - Default model for google/edit
   DEFAULT_MODEL_HUNYUAN_GENERATE - Default model for hunyuan/generate
   DEFAULT_MODEL_HUNYUAN_EDIT    - Default model for hunyuan/edit
   OPENCLAW_GATEWAY_URL     - Optional gateway URL
@@ -1409,6 +1574,7 @@ Examples:
   FAL_KEY=*** FAL_EDIT_IMAGE_URL=https://example.com/input.png npx ts-node clawra-selfie.ts "change to a beach vacation style" "#art" "Grok edit" "1:1" "jpeg" "fal" "edit" "xai/grok-imagine-image/edit"
   ARK_API_KEY=*** npx ts-node clawra-selfie.ts "城市夜景风格" "#art" "Volc" "1:1" "png" "volc" "edit" "doubao-seedream-5-0-260128"
   GOOGLE_API_KEY=*** npx ts-node clawra-selfie.ts "A cat astronaut" "#art" "Google" "1:1" "png" "google" "generate" "gemini-3-pro-image-preview"
+  GOOGLE_API_KEY=*** GOOGLE_EDIT_IMAGE_URL=https://example.com/input.png npx ts-node clawra-selfie.ts "Turn this into a cinematic portrait" "#art" "Google edit" "1:1" "png" "google" "edit" "gemini-3-pro-image-preview"
 `);
     process.exit(1);
   }
@@ -1453,6 +1619,7 @@ export {
   generateImageWithSeededit,
   generateImageWithHunyuan,
   generateImageWithGoogle,
+  generateImageWithGoogleEdit,
   sendViaOpenClaw,
   generateAndSend,
   main,

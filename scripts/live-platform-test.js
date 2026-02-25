@@ -13,6 +13,7 @@ const {
   generateImageWithFal,
   generateImageWithFalEdit,
   generateImageWithGoogle,
+  generateImageWithGoogleEdit,
   generateImageWithHunyuan,
   generateImageWithQwen,
   generateImageWithQwenEdit,
@@ -24,7 +25,7 @@ const PLATFORM_CAPS = {
   fal: ["generate", "edit"],
   volc: ["generate", "edit"],
   qwen: ["generate", "edit"],
-  google: ["generate"],
+  google: ["generate", "edit"],
   hunyuan: ["generate", "edit"],
 };
 
@@ -43,6 +44,7 @@ const DEFAULT_MODELS = {
   },
   google: {
     generate: "gemini-3-pro-image-preview",
+    edit: "gemini-3-pro-image-preview",
   },
   hunyuan: {
     generate: "aiart/v20221229 SubmitTextToImageJob",
@@ -229,6 +231,13 @@ function setEditReferenceImage(platform, imageSource) {
     }
     process.env.TENCENT_REFERENCE_IMAGE_URL = ONLINE_REFERENCE_IMAGE;
   }
+
+  if (platform === "google") {
+    delete process.env.GOOGLE_EDIT_IMAGE_URL;
+    delete process.env.GOOGLE_EDIT_IMAGE_PATH;
+    if (useLocal) process.env.GOOGLE_EDIT_IMAGE_PATH = LOCAL_REFERENCE_IMAGE;
+    else process.env.GOOGLE_EDIT_IMAGE_URL = ONLINE_REFERENCE_IMAGE;
+  }
 }
 
 async function runSingleOperation({
@@ -270,6 +279,9 @@ async function runSingleOperation({
   }
   if (platform === "google" && operation === "generate") {
     return generateImageWithGoogle({ prompt, model, aspectRatio });
+  }
+  if (platform === "google" && operation === "edit") {
+    return generateImageWithGoogleEdit({ prompt, model, aspectRatio });
   }
   if (platform === "hunyuan" && operation === "generate") {
     return generateImageWithHunyuan({
