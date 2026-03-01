@@ -314,15 +314,49 @@ async function resolveFalEditImage(): Promise<string> {
 }
 
 const GOOGLE_MODEL_ALIASES: Record<string, string> = {
-  "nano-banana-2": "gemini-3.1-flash-image",
-  "nano_banana_2": "gemini-3.1-flash-image",
-  "gemini-3.1-flash-image-preview": "gemini-3.1-flash-image",
+  "nano-banana-2": "gemini-3.1-flash-image-preview",
+  "nano_banana_2": "gemini-3.1-flash-image-preview",
 };
 
 function resolveGoogleModel(model: string): string {
   const normalized = model.trim();
   const alias = GOOGLE_MODEL_ALIASES[normalized.toLowerCase()];
   return alias || normalized;
+}
+
+function formatFetchFailure(error: unknown): string {
+  if (error instanceof Error) {
+    const cause = (error as any).cause;
+    if (cause && typeof cause === "object") {
+      const causeCode = typeof cause.code === "string" ? ` (${cause.code})` : "";
+      const causeMessage = typeof cause.message === "string" ? cause.message : String(cause);
+      return `${error.message}: ${causeMessage}${causeCode}`;
+    }
+    return error.message;
+  }
+  return String(error);
+}
+
+async function callGoogleGenerateContent(options: {
+  model: string;
+  apiKey: string;
+  payload: Record<string, unknown>;
+  actionLabel: string;
+}): Promise<Response> {
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${options.model}:generateContent`;
+  try {
+    return await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": options.apiKey,
+      },
+      body: JSON.stringify(options.payload),
+    });
+  } catch (error) {
+    const reason = formatFetchFailure(error);
+    throw new Error(`${options.actionLabel} request failed before reaching Google API: ${reason}`);
+  }
 }
 
 async function resolveGoogleEditImagePart(): Promise<{ mimeType: string; data: string }> {
@@ -749,25 +783,20 @@ async function generateImageWithGoogle(options: {
   }
 
   const model = resolveGoogleModel(options.model);
-
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${googleApiKey}`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: options.prompt }] }],
-        generationConfig: {
-          responseModalities: ["TEXT", "IMAGE"],
-          imageConfig: {
-            aspectRatio: options.aspectRatio,
-          },
+  const response = await callGoogleGenerateContent({
+    model,
+    apiKey: googleApiKey,
+    actionLabel: "Google image generation",
+    payload: {
+      contents: [{ parts: [{ text: options.prompt }] }],
+      generationConfig: {
+        responseModalities: ["TEXT", "IMAGE"],
+        imageConfig: {
+          aspectRatio: options.aspectRatio,
         },
-      }),
-    }
-  );
+      },
+    },
+  });
 
   const raw = await response.text();
   let data: any;
@@ -841,37 +870,32 @@ async function generateImageWithGoogleEdit(options: {
 
   const model = resolveGoogleModel(options.model);
   const imagePart = await resolveGoogleEditImagePart();
-
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${googleApiKey}`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              { text: options.prompt },
-              {
-                inlineData: {
-                  mimeType: imagePart.mimeType,
-                  data: imagePart.data,
-                },
+  const response = await callGoogleGenerateContent({
+    model,
+    apiKey: googleApiKey,
+    actionLabel: "Google image edit",
+    payload: {
+      contents: [
+        {
+          parts: [
+            { text: options.prompt },
+            {
+              inlineData: {
+                mimeType: imagePart.mimeType,
+                data: imagePart.data,
               },
-            ],
-          },
-        ],
-        generationConfig: {
-          responseModalities: ["TEXT", "IMAGE"],
-          imageConfig: {
-            aspectRatio: options.aspectRatio,
-          },
+            },
+          ],
         },
-      }),
-    }
-  );
+      ],
+      generationConfig: {
+        responseModalities: ["TEXT", "IMAGE"],
+        imageConfig: {
+          aspectRatio: options.aspectRatio,
+        },
+      },
+    },
+  });
 
   const raw = await response.text();
   let data: any;

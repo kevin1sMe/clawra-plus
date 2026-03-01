@@ -405,8 +405,9 @@ test("Google generate calls API and writes inline image to file", async () => {
   assert.equal(calls.length, 1);
   assert.equal(
     calls[0].url,
-    "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image-preview:generateContent?key=google-key"
+    "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image-preview:generateContent"
   );
+  assert.equal(calls[0].options.headers["x-goog-api-key"], "google-key");
   const body = JSON.parse(calls[0].options.body);
   assert.equal(body.contents[0].parts[0].text, "cat astronaut");
   assert.equal(body.generationConfig.imageConfig.aspectRatio, "16:9");
@@ -415,6 +416,46 @@ test("Google generate calls API and writes inline image to file", async () => {
 
   const bytes = await fs.readFile(result.media);
   assert.deepEqual(bytes, Buffer.from("google-image-bytes"));
+  await fs.unlink(result.media);
+});
+
+test("Google nano-banana alias resolves to preview endpoint", async () => {
+  process.env.GOOGLE_API_KEY = "google-key";
+  const calls = [];
+  const base64 = Buffer.from("google-image-bytes-alias").toString("base64");
+
+  installFetchQueue(
+    [
+      makeResponse({
+        candidates: [
+          {
+            content: {
+              parts: [
+                { text: "revised prompt" },
+                { inlineData: { mimeType: "image/png", data: base64 } },
+              ],
+            },
+          },
+        ],
+      }),
+    ],
+    calls
+  );
+
+  const result = await generateImageWithGoogle({
+    prompt: "nano banana dish",
+    aspectRatio: "1:1",
+    model: "nano-banana-2",
+  });
+
+  assert.equal(calls.length, 1);
+  assert.equal(
+    calls[0].url,
+    "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent"
+  );
+  assert.equal(calls[0].options.headers["x-goog-api-key"], "google-key");
+  assert.equal(result.model, "gemini-3.1-flash-image-preview");
+
   await fs.unlink(result.media);
 });
 
@@ -457,8 +498,9 @@ test("Google edit sends image+text payload and writes inline image to file", asy
   assert.equal(calls[0].url, "https://img.example/google-edit-input.jpg");
   assert.equal(
     calls[1].url,
-    "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image-preview:generateContent?key=google-key"
+    "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image-preview:generateContent"
   );
+  assert.equal(calls[1].options.headers["x-goog-api-key"], "google-key");
 
   const body = JSON.parse(calls[1].options.body);
   assert.equal(body.contents[0].parts[0].text, "turn this into anime style");
@@ -471,6 +513,26 @@ test("Google edit sends image+text payload and writes inline image to file", asy
   const bytes = await fs.readFile(result.media);
   assert.deepEqual(bytes, Buffer.from("google-edit-output-bytes"));
   await fs.unlink(result.media);
+});
+
+test("Google generate surfaces fetch cause details", async () => {
+  process.env.GOOGLE_API_KEY = "google-key";
+
+  const networkError = new Error("fetch failed");
+  networkError.cause = { code: "ENOTFOUND", message: "getaddrinfo ENOTFOUND generativelanguage.googleapis.com" };
+
+  global.fetch = async () => {
+    throw networkError;
+  };
+
+  await assert.rejects(
+    generateImageWithGoogle({
+      prompt: "cat astronaut",
+      aspectRatio: "1:1",
+      model: "nano-banana-2",
+    }),
+    /request failed before reaching Google API: fetch failed: getaddrinfo ENOTFOUND generativelanguage.googleapis.com \(ENOTFOUND\)/
+  );
 });
 
 test("Hunyuan edit builds submit/query calls correctly", async () => {
