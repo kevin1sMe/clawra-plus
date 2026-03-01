@@ -25,7 +25,7 @@ The script now uses a unified structure: `platform -> operation(generate/edit) -
 | `qwen` | `generate` / `edit` | `qwen-image-plus` / `qwen-image-edit-plus` (also supports `qwen-image-max` / `qwen-image-edit-max`) | `DASHSCOPE_API_KEY` |
 | `volc` | `generate` / `edit` | `doubao-seedream-5-0-260128` / `doubao-seedream-5-0-260128` | `ARK_API_KEY` |
 | `fal` | `generate` / `edit` | `xai/grok-imagine-image` / `xai/grok-imagine-image/edit` | `FAL_KEY` |
-| `google` | `generate` / `edit` | `gemini-3-pro-image-preview` / `gemini-3-pro-image-preview` (also supports `gemini-2.5-flash-image`) | `GOOGLE_API_KEY` |
+| `google` | `generate` / `edit` | `gemini-3-pro-image-preview` / `gemini-3-pro-image-preview` (also supports `gemini-3.1-flash-image`, `nano-banana-2`, and `gemini-2.5-flash-image`) | `GOOGLE_API_KEY` |
 | `hunyuan` | `generate` / `edit` | `aiart/v20221229 SubmitTextToImageJob` / `aiart/v20221229 SubmitTextToImageJob` | `TENCENT_SECRET_ID` + `TENCENT_SECRET_KEY` |
 
 List all supported models:
@@ -144,8 +144,8 @@ DEFAULT_MODEL_VOLC_GENERATE=doubao-seedream-5-0-260128
 DEFAULT_MODEL_VOLC_EDIT=doubao-seedream-5-0-260128
 DEFAULT_MODEL_FAL_GENERATE=xai/grok-imagine-image
 DEFAULT_MODEL_FAL_EDIT=xai/grok-imagine-image/edit
-DEFAULT_MODEL_GOOGLE_GENERATE=gemini-3-pro-image-preview
-DEFAULT_MODEL_GOOGLE_EDIT=gemini-3-pro-image-preview
+DEFAULT_MODEL_GOOGLE_GENERATE=gemini-3.1-flash-image
+DEFAULT_MODEL_GOOGLE_EDIT=gemini-3.1-flash-image
 DEFAULT_MODEL_HUNYUAN_GENERATE="aiart/v20221229 SubmitTextToImageJob"
 DEFAULT_MODEL_HUNYUAN_EDIT="aiart/v20221229 SubmitTextToImageJob"
 ```

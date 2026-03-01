@@ -313,8 +313,16 @@ async function resolveFalEditImage(): Promise<string> {
   );
 }
 
+const GOOGLE_MODEL_ALIASES: Record<string, string> = {
+  "nano-banana-2": "gemini-3.1-flash-image",
+  "nano_banana_2": "gemini-3.1-flash-image",
+  "gemini-3.1-flash-image-preview": "gemini-3.1-flash-image",
+};
+
 function resolveGoogleModel(model: string): string {
-  return model;
+  const normalized = model.trim();
+  const alias = GOOGLE_MODEL_ALIASES[normalized.toLowerCase()];
+  return alias || normalized;
 }
 
 async function resolveGoogleEditImagePart(): Promise<{ mimeType: string; data: string }> {
@@ -430,7 +438,14 @@ const PLATFORM_SPECS: Record<Platform, PlatformSpec> = {
     ignoresOutputFormat: true,
     operations: {
       generate: {
-        models: ["gemini-3-pro-image-preview", "gemini-2.5-flash-image"],
+        models: [
+          "gemini-3-pro-image-preview",
+          "gemini-3.1-flash-image",
+          "gemini-3.1-flash-image-preview",
+          "nano-banana-2",
+          "nano_banana_2",
+          "gemini-2.5-flash-image",
+        ],
         caption: "Generated with Google Image",
         execute: async ({ prompt, aspectRatio, model }) =>
           generateImageWithGoogle({
@@ -440,7 +455,14 @@ const PLATFORM_SPECS: Record<Platform, PlatformSpec> = {
           }),
       },
       edit: {
-        models: ["gemini-3-pro-image-preview", "gemini-2.5-flash-image"],
+        models: [
+          "gemini-3-pro-image-preview",
+          "gemini-3.1-flash-image",
+          "gemini-3.1-flash-image-preview",
+          "nano-banana-2",
+          "nano_banana_2",
+          "gemini-2.5-flash-image",
+        ],
         caption: "Edited with Google Image",
         execute: async ({ prompt, aspectRatio, model }) =>
           generateImageWithGoogleEdit({
